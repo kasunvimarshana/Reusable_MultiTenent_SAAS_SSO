@@ -41,20 +41,23 @@ class ProductDTO
 
     public function toArray(): array
     {
-        return array_filter([
+        $data = [
             'tenant_id' => $this->tenantId,
             'name' => $this->name,
             'sku' => $this->sku,
-            'category_id' => $this->categoryId,
             'description' => $this->description,
             'price' => $this->price,
-            'cost' => $this->cost,
-            'weight' => $this->weight,
             'dimensions' => $this->dimensions,
             'images' => $this->images,
             'tags' => $this->tags,
             'is_active' => $this->isActive,
-            'created_by' => $this->createdBy,
-        ], fn($v) => $v !== null);
+        ];
+
+        if ($this->categoryId !== null) $data['category_id'] = $this->categoryId;
+        if ($this->cost !== null) $data['cost'] = $this->cost;
+        if ($this->weight !== null) $data['weight'] = $this->weight;
+        if ($this->createdBy !== null) $data['created_by'] = $this->createdBy;
+
+        return $data;
     }
 }
