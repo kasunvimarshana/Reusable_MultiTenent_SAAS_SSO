@@ -35,7 +35,8 @@ class AuthenticateWithPassport
             ->first();
 
         if (!$user) {
-            // Auto-provision user from token data
+            // Auto-provision a local user shadow record from the token. Authentication is
+            // always delegated to the auth-service; the random password is never used.
             app()->instance('current_tenant_id', $tokenData['tenant_id']);
             $user = User::create([
                 'tenant_id' => $tokenData['tenant_id'],

@@ -54,7 +54,7 @@ class User extends Authenticatable
         return !empty(array_intersect($roles, $this->roles ?? []));
     }
 
-    public function getAttribute_(string $key): mixed
+    public function getJsonAttribute(string $key): mixed
     {
         return ($this->attributes ?? [])[$key] ?? null;
     }

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\DTOs\UserDTO;
+use App\Enums\UserRole;
 use App\Events\UserCreated;
 use App\Events\UserDeleted;
 use App\Events\UserUpdated;
@@ -80,7 +81,7 @@ class UserService
 
     public function updateRoles(int $id, array $roles): User
     {
-        $validRoles = ['admin', 'manager', 'staff'];
+        $validRoles = UserRole::values();
         foreach ($roles as $role) {
             if (!in_array($role, $validRoles)) {
                 throw ValidationException::withMessages([

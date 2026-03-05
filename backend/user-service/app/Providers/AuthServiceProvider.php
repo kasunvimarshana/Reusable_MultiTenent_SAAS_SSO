@@ -19,8 +19,8 @@ class AuthServiceProvider extends ServiceProvider
 
         // RBAC Gates
         Gate::define('manage-users', fn(User $user) => $user->hasRole('admin'));
-        Gate::define('manage-roles', fn(User $user, User $target) => $user->hasRole('admin'));
-        Gate::define('manage-attributes', fn(User $user, User $target) => $user->hasAnyRole(['admin', 'manager']));
+        Gate::define('manage-roles', fn(User $user) => $user->hasRole('admin'));
+        Gate::define('manage-attributes', fn(User $user) => $user->hasAnyRole(['admin', 'manager']));
 
         // ABAC Gates
         Gate::define('access-same-department', fn(User $user, User $target) =>
