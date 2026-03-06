@@ -4,6 +4,7 @@ namespace App\Repositories\Interfaces;
 
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 
 interface UserRepositoryInterface
 {
@@ -17,5 +18,5 @@ interface UserRepositoryInterface
 
     public function delete(User $user): bool;
 
-    public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator;
+    public function paginate(array $filters = [], ?int $perPage = null): LengthAwarePaginator|Collection;
 }

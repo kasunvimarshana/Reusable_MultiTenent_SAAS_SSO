@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Repositories\Interfaces\UserRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
 class UserRepository implements UserRepositoryInterface
 {
@@ -41,16 +42,17 @@ class UserRepository implements UserRepositoryInterface
         return $user->delete();
     }
 
-    public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    public function paginate(array $filters = [], ?int $perPage = null): LengthAwarePaginator|Collection
     {
-        return User::query()
+        $query = User::query()
             ->when(isset($filters['search']), fn (Builder $q) => $q->where(fn (Builder $inner) => $inner->where('name', 'like', "%{$filters['search']}%")
                 ->orWhere('email', 'like', "%{$filters['search']}%")
             )
             )
             ->when(isset($filters['role']), fn (Builder $q) => $q->whereJsonContains('roles', $filters['role'])
             )
-            ->orderBy($filters['sort_by'] ?? 'created_at', $filters['sort_dir'] ?? 'desc')
-            ->paginate($perPage);
+            ->orderBy($filters['sort_by'] ?? 'created_at', $filters['sort_dir'] ?? 'desc');
+
+        return $perPage !== null ? $query->paginate($perPage) : $query->get();
     }
 }

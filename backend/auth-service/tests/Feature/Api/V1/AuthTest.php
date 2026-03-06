@@ -13,6 +13,7 @@ class AuthTest extends TestCase
     use RefreshDatabase;
 
     private Tenant $tenant;
+    private User $adminUser;
 
     protected function setUp(): void
     {
@@ -23,6 +24,15 @@ class AuthTest extends TestCase
             'slug' => 'test-tenant',
             'is_active' => true,
             'plan' => 'basic',
+        ]);
+
+        $this->adminUser = User::create([
+            'tenant_id' => $this->tenant->id,
+            'name' => 'Admin User',
+            'email' => 'admin@test.com',
+            'password' => Hash::make('password'),
+            'roles' => ['admin'],
+            'is_active' => true,
         ]);
     }
 
@@ -121,5 +131,37 @@ class AuthTest extends TestCase
     {
         $response = $this->getJson('/api/v1/auth/me');
         $response->assertStatus(401);
+    }
+
+    public function test_list_tenants_requires_auth(): void
+    {
+        $this->getJson('/api/v1/tenants')->assertStatus(401);
+    }
+
+    public function test_list_tenants_with_pagination(): void
+    {
+        $this->actingAs($this->adminUser, 'api')
+            ->getJson('/api/v1/tenants?per_page=10')
+            ->assertStatus(200)
+            ->assertJsonStructure(['data', 'meta', 'links']);
+    }
+
+    public function test_list_tenants_without_per_page_returns_all(): void
+    {
+        Tenant::create([
+            'name' => 'Second Tenant',
+            'slug' => 'second-tenant',
+            'is_active' => true,
+            'plan' => 'basic',
+        ]);
+
+        $response = $this->actingAs($this->adminUser, 'api')
+            ->getJson('/api/v1/tenants')
+            ->assertStatus(200)
+            ->assertJsonStructure(['data']);
+
+        $this->assertArrayNotHasKey('meta', $response->json());
+        $this->assertArrayNotHasKey('links', $response->json());
+        $this->assertCount(2, $response->json('data'));
     }
 }
