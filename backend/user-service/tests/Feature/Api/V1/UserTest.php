@@ -136,4 +136,44 @@ class UserTest extends TestCase
             ->assertStatus(200)
             ->assertJsonStructure(['data']);
     }
+
+    public function test_list_roles_with_pagination(): void
+    {
+        $this->withToken('fake-token')
+            ->getJson('/api/v1/roles?per_page=2')
+            ->assertStatus(200)
+            ->assertJsonStructure(['data', 'meta', 'links']);
+    }
+
+    public function test_list_roles_without_per_page_returns_all(): void
+    {
+        $response = $this->withToken('fake-token')
+            ->getJson('/api/v1/roles')
+            ->assertStatus(200)
+            ->assertJsonStructure(['data']);
+
+        $this->assertArrayNotHasKey('meta', $response->json());
+        $this->assertArrayNotHasKey('links', $response->json());
+        $this->assertCount(3, $response->json('data'));
+    }
+
+    public function test_list_permissions_with_pagination(): void
+    {
+        $this->withToken('fake-token')
+            ->getJson('/api/v1/permissions?per_page=3')
+            ->assertStatus(200)
+            ->assertJsonStructure(['data', 'meta', 'links']);
+    }
+
+    public function test_list_permissions_without_per_page_returns_all(): void
+    {
+        $response = $this->withToken('fake-token')
+            ->getJson('/api/v1/permissions')
+            ->assertStatus(200)
+            ->assertJsonStructure(['data']);
+
+        $this->assertArrayNotHasKey('meta', $response->json());
+        $this->assertArrayNotHasKey('links', $response->json());
+        $this->assertCount(8, $response->json('data'));
+    }
 }

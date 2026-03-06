@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Services\RoleService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class RoleController extends Controller
 {
@@ -12,9 +14,13 @@ class RoleController extends Controller
         private readonly RoleService $roleService,
     ) {}
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        return response()->json(['data' => $this->roleService->all()]);
+        $roles = $this->roleService->list(
+            $request->filled('per_page') ? (int) $request->input('per_page') : null,
+        );
+
+        return response()->json(JsonResource::collection($roles)->response()->getData(true));
     }
 
     public function show(string $name): JsonResponse

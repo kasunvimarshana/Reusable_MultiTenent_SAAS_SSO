@@ -156,4 +156,33 @@ class InventoryTest extends TestCase
             ->getJson('/api/v1/warehouses')
             ->assertStatus(200);
     }
+
+    public function test_list_warehouses_with_pagination(): void
+    {
+        $this->withToken('fake-token')
+            ->getJson('/api/v1/warehouses?per_page=5')
+            ->assertStatus(200)
+            ->assertJsonStructure(['data', 'meta', 'links']);
+    }
+
+    public function test_list_warehouses_without_per_page_returns_all(): void
+    {
+        Warehouse::create([
+            'tenant_id' => $this->tenantId,
+            'name' => 'Second Warehouse',
+            'code' => 'SEC-WH',
+            'city' => 'Other City',
+            'country' => 'US',
+            'is_active' => true,
+        ]);
+
+        $response = $this->withToken('fake-token')
+            ->getJson('/api/v1/warehouses')
+            ->assertStatus(200)
+            ->assertJsonStructure(['data']);
+
+        $this->assertArrayNotHasKey('meta', $response->json());
+        $this->assertArrayNotHasKey('links', $response->json());
+        $this->assertCount(2, $response->json('data'));
+    }
 }

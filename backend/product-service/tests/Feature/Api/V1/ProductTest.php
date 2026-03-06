@@ -193,6 +193,33 @@ class ProductTest extends TestCase
             ->assertStatus(200);
     }
 
+    public function test_list_categories_with_pagination(): void
+    {
+        $this->withToken('fake-token')
+            ->getJson('/api/v1/categories?per_page=5')
+            ->assertStatus(200)
+            ->assertJsonStructure(['data', 'meta', 'links']);
+    }
+
+    public function test_list_categories_without_per_page_returns_all(): void
+    {
+        Category::create([
+            'tenant_id' => $this->tenantId,
+            'name' => 'Second Category',
+            'slug' => 'second-category',
+            'is_active' => true,
+        ]);
+
+        $response = $this->withToken('fake-token')
+            ->getJson('/api/v1/categories')
+            ->assertStatus(200)
+            ->assertJsonStructure(['data']);
+
+        $this->assertArrayNotHasKey('meta', $response->json());
+        $this->assertArrayNotHasKey('links', $response->json());
+        $this->assertCount(2, $response->json('data'));
+    }
+
     public function test_unauthenticated_request_rejected(): void
     {
         $this->getJson('/api/v1/products')->assertStatus(401);
