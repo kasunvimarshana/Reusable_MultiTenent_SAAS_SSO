@@ -8,6 +8,7 @@ use App\Events\InventoryUpdated;
 use App\Models\Inventory;
 use App\Repositories\Interfaces\InventoryRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -18,16 +19,16 @@ class InventoryService
         private readonly ProductServiceClient $productClient,
     ) {}
 
-    public function list(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    public function list(array $filters = [], ?int $perPage = null): LengthAwarePaginator|Collection
     {
         // Cross-service filter: if filtering by product name, first resolve product IDs
-        if (!empty($filters['product_name'])) {
+        if (! empty($filters['product_name'])) {
             $products = $this->productClient->searchByName($filters['product_name']);
             $filters['product_ids'] = array_column($products, 'id');
             unset($filters['product_name']);
 
             if (empty($filters['product_ids'])) {
-                // No products matched, return empty paginator
+                // No products matched, return empty result
                 return $this->inventoryRepository->paginate(['product_ids' => [-1]], $perPage);
             }
         }
@@ -38,7 +39,7 @@ class InventoryService
     public function findById(int $id): Inventory
     {
         return $this->inventoryRepository->findById($id)
-            ?? throw new \Illuminate\Database\Eloquent\ModelNotFoundException("Inventory record not found.");
+            ?? throw new \Illuminate\Database\Eloquent\ModelNotFoundException('Inventory record not found.');
     }
 
     public function create(array $data): Inventory
@@ -125,7 +126,7 @@ class InventoryService
                 ->lockForUpdate()
                 ->first();
 
-            if (!$inventory) {
+            if (! $inventory) {
                 throw new \RuntimeException("No inventory found for product {$productId} in warehouse {$warehouseId}.");
             }
 
@@ -155,7 +156,7 @@ class InventoryService
                 ->lockForUpdate()
                 ->first();
 
-            if (!$inventory) {
+            if (! $inventory) {
                 throw new \RuntimeException("No inventory found for product {$productId} in warehouse {$warehouseId}.");
             }
 
@@ -180,8 +181,8 @@ class InventoryService
                 ->lockForUpdate()
                 ->first();
 
-            if (!$inventory) {
-                throw new \RuntimeException("No inventory found.");
+            if (! $inventory) {
+                throw new \RuntimeException('No inventory found.');
             }
 
             $inventory->update([

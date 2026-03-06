@@ -30,9 +30,11 @@ class ProductServiceClient
                 ],
             ]);
             $data = json_decode($response->getBody()->getContents(), true);
+
             return $data['data'] ?? [];
         } catch (RequestException $e) {
             Log::warning('ProductServiceClient: searchByName failed', ['error' => $e->getMessage()]);
+
             return [];
         }
     }
@@ -48,9 +50,11 @@ class ProductServiceClient
                 ],
             ]);
             $data = json_decode($response->getBody()->getContents(), true);
+
             return $data['data'] ?? null;
         } catch (RequestException $e) {
             Log::warning('ProductServiceClient: getProductById failed', ['error' => $e->getMessage()]);
+
             return null;
         }
     }

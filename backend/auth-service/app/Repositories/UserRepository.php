@@ -20,6 +20,7 @@ class UserRepository implements UserRepositoryInterface
         if ($tenantId !== null) {
             $query->where('tenant_id', $tenantId);
         }
+
         return $query->first();
     }
 
@@ -31,6 +32,7 @@ class UserRepository implements UserRepositoryInterface
     public function update(User $user, array $data): User
     {
         $user->update($data);
+
         return $user->fresh();
     }
 
@@ -42,14 +44,11 @@ class UserRepository implements UserRepositoryInterface
     public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
         return User::query()
-            ->when(isset($filters['search']), fn(Builder $q) =>
-                $q->where(fn(Builder $inner) =>
-                    $inner->where('name', 'like', "%{$filters['search']}%")
-                          ->orWhere('email', 'like', "%{$filters['search']}%")
-                )
+            ->when(isset($filters['search']), fn (Builder $q) => $q->where(fn (Builder $inner) => $inner->where('name', 'like', "%{$filters['search']}%")
+                ->orWhere('email', 'like', "%{$filters['search']}%")
             )
-            ->when(isset($filters['role']), fn(Builder $q) =>
-                $q->whereJsonContains('roles', $filters['role'])
+            )
+            ->when(isset($filters['role']), fn (Builder $q) => $q->whereJsonContains('roles', $filters['role'])
             )
             ->orderBy($filters['sort_by'] ?? 'created_at', $filters['sort_dir'] ?? 'desc')
             ->paginate($perPage);

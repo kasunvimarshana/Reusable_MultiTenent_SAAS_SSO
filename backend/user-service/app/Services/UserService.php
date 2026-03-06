@@ -10,6 +10,7 @@ use App\Events\UserUpdated;
 use App\Models\User;
 use App\Repositories\Interfaces\UserRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -19,7 +20,7 @@ class UserService
         private readonly UserRepositoryInterface $userRepository,
     ) {}
 
-    public function list(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    public function list(array $filters = [], ?int $perPage = null): LengthAwarePaginator|Collection
     {
         return $this->userRepository->paginate($filters, $perPage);
     }
@@ -27,7 +28,7 @@ class UserService
     public function findById(int $id): User
     {
         return $this->userRepository->findById($id)
-            ?? throw new \Illuminate\Database\Eloquent\ModelNotFoundException("User not found.");
+            ?? throw new \Illuminate\Database\Eloquent\ModelNotFoundException('User not found.');
     }
 
     public function create(array $data): User
@@ -83,12 +84,13 @@ class UserService
     {
         $validRoles = UserRole::values();
         foreach ($roles as $role) {
-            if (!in_array($role, $validRoles)) {
+            if (! in_array($role, $validRoles)) {
                 throw ValidationException::withMessages([
-                    'roles' => ["Invalid role: {$role}. Must be one of: " . implode(', ', $validRoles)],
+                    'roles' => ["Invalid role: {$role}. Must be one of: ".implode(', ', $validRoles)],
                 ]);
             }
         }
+
         return $this->update($id, ['roles' => $roles]);
     }
 
@@ -96,6 +98,7 @@ class UserService
     {
         $user = $this->findById($id);
         $merged = array_merge($user->attributes ?? [], $attributes);
+
         return $this->update($id, ['attributes' => $merged]);
     }
 }

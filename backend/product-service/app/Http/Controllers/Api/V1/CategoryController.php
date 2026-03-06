@@ -20,7 +20,7 @@ class CategoryController extends Controller
     {
         $categories = $this->categoryService->list(
             $request->only(['search', 'parent_id', 'is_active', 'sort_by', 'sort_dir']),
-            $request->input('per_page', 50),
+            $request->filled('per_page') ? (int) $request->input('per_page') : null,
         );
 
         return response()->json(CategoryResource::collection($categories)->response()->getData(true));

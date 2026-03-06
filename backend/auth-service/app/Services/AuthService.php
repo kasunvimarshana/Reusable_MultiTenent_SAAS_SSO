@@ -56,13 +56,13 @@ class AuthService
 
         $user = $this->userRepository->findByEmail($credentials['email'], $tenantId);
 
-        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+        if (! $user || ! Hash::check($credentials['password'], $user->password)) {
             throw ValidationException::withMessages([
                 'email' => ['Invalid credentials.'],
             ]);
         }
 
-        if (!$user->is_active) {
+        if (! $user->is_active) {
             throw ValidationException::withMessages([
                 'email' => ['Account is inactive.'],
             ]);
@@ -90,7 +90,7 @@ class AuthService
             ->with('user')
             ->first();
 
-        if (!$accessToken || $accessToken->revoked) {
+        if (! $accessToken || $accessToken->revoked) {
             return ['active' => false];
         }
 
@@ -132,8 +132,10 @@ class AuthService
         if (count($parts) === 3) {
             // JWT format
             $payload = json_decode(base64_decode($parts[1]), true);
+
             return $payload['jti'] ?? '';
         }
+
         return '';
     }
 }

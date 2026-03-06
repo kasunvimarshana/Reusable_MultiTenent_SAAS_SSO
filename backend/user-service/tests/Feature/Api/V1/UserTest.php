@@ -68,7 +68,36 @@ class UserTest extends TestCase
         $this->withToken('fake-token')
             ->getJson('/api/v1/users')
             ->assertStatus(200)
+            ->assertJsonStructure(['data']);
+    }
+
+    public function test_list_users_with_pagination(): void
+    {
+        $this->withToken('fake-token')
+            ->getJson('/api/v1/users?per_page=10')
+            ->assertStatus(200)
             ->assertJsonStructure(['data', 'meta', 'links']);
+    }
+
+    public function test_list_users_without_per_page_returns_all(): void
+    {
+        User::create([
+            'tenant_id' => $this->tenantId,
+            'name' => 'Second User',
+            'email' => 'second@test.com',
+            'password' => bcrypt('password'),
+            'roles' => ['staff'],
+            'is_active' => true,
+        ]);
+
+        $response = $this->withToken('fake-token')
+            ->getJson('/api/v1/users')
+            ->assertStatus(200)
+            ->assertJsonStructure(['data']);
+
+        $this->assertArrayNotHasKey('meta', $response->json());
+        $this->assertArrayNotHasKey('links', $response->json());
+        $this->assertCount(2, $response->json('data'));
     }
 
     public function test_admin_can_create_user(): void

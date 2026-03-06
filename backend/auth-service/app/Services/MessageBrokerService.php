@@ -8,6 +8,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 class MessageBrokerService
 {
     private ?AMQPStreamConnection $connection = null;
+
     private ?\PhpAmqpLib\Channel\AMQPChannel $channel = null;
 
     public function publish(string $routingKey, array $payload): void

@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Repositories\Interfaces\CategoryRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
 class CategoryRepository implements CategoryRepositoryInterface
 {
@@ -22,6 +23,7 @@ class CategoryRepository implements CategoryRepositoryInterface
     public function update(Category $category, array $data): Category
     {
         $category->update($data);
+
         return $category->fresh(['parent', 'children']);
     }
 
@@ -30,22 +32,19 @@ class CategoryRepository implements CategoryRepositoryInterface
         return $category->delete();
     }
 
-    public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    public function paginate(array $filters = [], ?int $perPage = null): LengthAwarePaginator|Collection
     {
-        return Category::with(['parent'])
-            ->when(isset($filters['search']), fn(Builder $q) =>
-                $q->where(fn(Builder $inner) =>
-                    $inner->where('name', 'like', "%{$filters['search']}%")
-                          ->orWhere('description', 'like', "%{$filters['search']}%")
-                )
+        $query = Category::with(['parent'])
+            ->when(isset($filters['search']), fn (Builder $q) => $q->where(fn (Builder $inner) => $inner->where('name', 'like', "%{$filters['search']}%")
+                ->orWhere('description', 'like', "%{$filters['search']}%")
             )
-            ->when(isset($filters['parent_id']), fn(Builder $q) =>
-                $q->where('parent_id', $filters['parent_id'])
             )
-            ->when(isset($filters['is_active']), fn(Builder $q) =>
-                $q->where('is_active', filter_var($filters['is_active'], FILTER_VALIDATE_BOOLEAN))
+            ->when(isset($filters['parent_id']), fn (Builder $q) => $q->where('parent_id', $filters['parent_id'])
             )
-            ->orderBy($filters['sort_by'] ?? 'name', $filters['sort_dir'] ?? 'asc')
-            ->paginate($perPage);
+            ->when(isset($filters['is_active']), fn (Builder $q) => $q->where('is_active', filter_var($filters['is_active'], FILTER_VALIDATE_BOOLEAN))
+            )
+            ->orderBy($filters['sort_by'] ?? 'name', $filters['sort_dir'] ?? 'asc');
+
+        return $perPage !== null ? $query->paginate($perPage) : $query->get();
     }
 }

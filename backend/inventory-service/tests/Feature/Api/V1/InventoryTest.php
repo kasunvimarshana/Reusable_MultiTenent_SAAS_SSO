@@ -73,7 +73,36 @@ class InventoryTest extends TestCase
         $this->withToken('fake-token')
             ->getJson('/api/v1/inventory')
             ->assertStatus(200)
+            ->assertJsonStructure(['data']);
+    }
+
+    public function test_list_inventory_with_pagination(): void
+    {
+        $this->withToken('fake-token')
+            ->getJson('/api/v1/inventory?per_page=10')
+            ->assertStatus(200)
             ->assertJsonStructure(['data', 'meta', 'links']);
+    }
+
+    public function test_list_inventory_without_per_page_returns_all(): void
+    {
+        Inventory::create([
+            'tenant_id' => $this->tenantId,
+            'product_id' => 10,
+            'warehouse_id' => $this->warehouse->id,
+            'quantity' => 5,
+            'reserved_quantity' => 0,
+            'reorder_level' => 2,
+        ]);
+
+        $response = $this->withToken('fake-token')
+            ->getJson('/api/v1/inventory')
+            ->assertStatus(200)
+            ->assertJsonStructure(['data']);
+
+        $this->assertArrayNotHasKey('meta', $response->json());
+        $this->assertArrayNotHasKey('links', $response->json());
+        $this->assertCount(1, $response->json('data'));
     }
 
     public function test_create_inventory(): void

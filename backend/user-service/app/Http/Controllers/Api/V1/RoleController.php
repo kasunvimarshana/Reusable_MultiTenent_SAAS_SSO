@@ -21,7 +21,7 @@ class RoleController extends Controller
     {
         $role = $this->roleService->findByName($name);
 
-        if (!$role) {
+        if (! $role) {
             return response()->json(['message' => 'Role not found.'], 404);
         }
 

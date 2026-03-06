@@ -21,7 +21,7 @@ class PassportTokenValidationService
 
     public function validate(string $bearerToken): ?array
     {
-        $cacheKey = 'token_introspect_' . hash('sha256', $bearerToken);
+        $cacheKey = 'token_introspect_'.hash('sha256', $bearerToken);
 
         return Cache::remember($cacheKey, 60, function () use ($bearerToken) {
             try {
@@ -36,9 +36,11 @@ class PassportTokenValidationService
                     ]
                 );
                 $data = json_decode($response->getBody()->getContents(), true);
+
                 return ($data['active'] ?? false) ? $data : null;
             } catch (RequestException $e) {
                 Log::warning('Token validation failed', ['error' => $e->getMessage()]);
+
                 return null;
             }
         });

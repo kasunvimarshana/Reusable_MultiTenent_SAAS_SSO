@@ -79,7 +79,30 @@ class ProductTest extends TestCase
         $this->withToken('fake-token')
             ->getJson('/api/v1/products')
             ->assertStatus(200)
+            ->assertJsonStructure(['data']);
+    }
+
+    public function test_list_products_with_pagination(): void
+    {
+        $this->withToken('fake-token')
+            ->getJson('/api/v1/products?per_page=5')
+            ->assertStatus(200)
             ->assertJsonStructure(['data', 'meta', 'links']);
+    }
+
+    public function test_list_products_without_per_page_returns_all(): void
+    {
+        Product::create(['tenant_id' => $this->tenantId, 'name' => 'Product A', 'sku' => 'A-001', 'price' => 10.00]);
+        Product::create(['tenant_id' => $this->tenantId, 'name' => 'Product B', 'sku' => 'B-001', 'price' => 20.00]);
+
+        $response = $this->withToken('fake-token')
+            ->getJson('/api/v1/products')
+            ->assertStatus(200)
+            ->assertJsonStructure(['data']);
+
+        $this->assertArrayNotHasKey('meta', $response->json());
+        $this->assertArrayNotHasKey('links', $response->json());
+        $this->assertCount(2, $response->json('data'));
     }
 
     public function test_create_product(): void

@@ -6,6 +6,7 @@ use App\DTOs\WarehouseDTO;
 use App\Models\Warehouse;
 use App\Repositories\Interfaces\WarehouseRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 class WarehouseService
@@ -14,7 +15,7 @@ class WarehouseService
         private readonly WarehouseRepositoryInterface $warehouseRepository,
     ) {}
 
-    public function list(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    public function list(array $filters = [], ?int $perPage = null): LengthAwarePaginator|Collection
     {
         return $this->warehouseRepository->paginate($filters, $perPage);
     }
@@ -22,13 +23,14 @@ class WarehouseService
     public function findById(int $id): Warehouse
     {
         return $this->warehouseRepository->findById($id)
-            ?? throw new \Illuminate\Database\Eloquent\ModelNotFoundException("Warehouse not found.");
+            ?? throw new \Illuminate\Database\Eloquent\ModelNotFoundException('Warehouse not found.');
     }
 
     public function create(array $data): Warehouse
     {
         return DB::transaction(function () use ($data) {
             $dto = WarehouseDTO::fromArray($data);
+
             return $this->warehouseRepository->create($dto->toArray());
         });
     }
@@ -37,6 +39,7 @@ class WarehouseService
     {
         return DB::transaction(function () use ($id, $data) {
             $warehouse = $this->findById($id);
+
             return $this->warehouseRepository->update($warehouse, $data);
         });
     }

@@ -22,7 +22,7 @@ class UserController extends Controller
 
         $users = $this->userService->list(
             $request->only(['search', 'role', 'is_active', 'department', 'region', 'sort_by', 'sort_dir']),
-            $request->input('per_page', 15),
+            $request->filled('per_page') ? (int) $request->input('per_page') : null,
         );
 
         return response()->json(UserResource::collection($users)->response()->getData(true));

@@ -21,7 +21,7 @@ class PassportTokenValidationService
 
     public function validate(string $bearerToken): ?array
     {
-        $cacheKey = 'token_introspect_' . hash('sha256', $bearerToken);
+        $cacheKey = 'token_introspect_'.hash('sha256', $bearerToken);
 
         return Cache::remember($cacheKey, 60, function () use ($bearerToken) {
             try {
@@ -38,7 +38,7 @@ class PassportTokenValidationService
 
                 $data = json_decode($response->getBody()->getContents(), true);
 
-                if (!($data['active'] ?? false)) {
+                if (! ($data['active'] ?? false)) {
                     return null;
                 }
 
@@ -47,6 +47,7 @@ class PassportTokenValidationService
                 Log::warning('PassportTokenValidationService: Introspection failed', [
                     'error' => $e->getMessage(),
                 ]);
+
                 return null;
             }
         });

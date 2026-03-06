@@ -20,7 +20,7 @@ class ProductController extends Controller
     {
         $products = $this->productService->list(
             $request->only(['search', 'category_id', 'is_active', 'min_price', 'max_price', 'tag', 'sort_by', 'sort_dir']),
-            $request->input('per_page', 15),
+            $request->filled('per_page') ? (int) $request->input('per_page') : null,
         );
 
         return response()->json(ProductResource::collection($products)->response()->getData(true));
