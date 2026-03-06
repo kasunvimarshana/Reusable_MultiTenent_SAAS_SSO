@@ -22,7 +22,7 @@ class TenantController extends Controller
 
         $tenants = $this->tenantService->list(
             $request->only(['search', 'is_active', 'sort_by', 'sort_dir']),
-            $request->input('per_page', 15),
+            $request->filled('per_page') ? (int) $request->input('per_page') : null,
         );
 
         return response()->json(TenantResource::collection($tenants)->response()->getData(true));

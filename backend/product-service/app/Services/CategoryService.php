@@ -6,6 +6,7 @@ use App\DTOs\CategoryDTO;
 use App\Models\Category;
 use App\Repositories\Interfaces\CategoryRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -15,7 +16,7 @@ class CategoryService
         private readonly CategoryRepositoryInterface $categoryRepository,
     ) {}
 
-    public function list(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    public function list(array $filters = [], ?int $perPage = null): LengthAwarePaginator|Collection
     {
         return $this->categoryRepository->paginate($filters, $perPage);
     }
@@ -23,7 +24,7 @@ class CategoryService
     public function findById(int $id): Category
     {
         return $this->categoryRepository->findById($id)
-            ?? throw new \Illuminate\Database\Eloquent\ModelNotFoundException("Category not found.");
+            ?? throw new \Illuminate\Database\Eloquent\ModelNotFoundException('Category not found.');
     }
 
     public function create(array $data): Category
@@ -31,6 +32,7 @@ class CategoryService
         return DB::transaction(function () use ($data) {
             $data['slug'] = $data['slug'] ?? Str::slug($data['name']);
             $dto = CategoryDTO::fromArray($data);
+
             return $this->categoryRepository->create($dto->toArray());
         });
     }
@@ -39,9 +41,10 @@ class CategoryService
     {
         return DB::transaction(function () use ($id, $data) {
             $category = $this->findById($id);
-            if (isset($data['name']) && !isset($data['slug'])) {
+            if (isset($data['name']) && ! isset($data['slug'])) {
                 $data['slug'] = Str::slug($data['name']);
             }
+
             return $this->categoryRepository->update($category, $data);
         });
     }

@@ -18,8 +18,9 @@ class OrderController extends Controller
     {
         $orders = $this->orderService->list(
             $request->only(['status', 'user_id', 'date_from', 'date_to', 'sort_by', 'sort_dir']),
-            $request->input('per_page', 15),
+            $request->filled('per_page') ? (int) $request->input('per_page') : null,
         );
+
         return response()->json(OrderResource::collection($orders)->response()->getData(true));
     }
 
@@ -30,6 +31,7 @@ class OrderController extends Controller
             'user_id' => $request->user()->id,
         ]));
         $order = $this->orderService->create($dto);
+
         return response()->json(['message' => 'Order created successfully.', 'data' => new OrderResource($order)], 201);
     }
 
@@ -37,6 +39,7 @@ class OrderController extends Controller
     {
         $order = $this->orderService->findById($id);
         $this->authorize('view', $order);
+
         return response()->json(['data' => new OrderResource($order)]);
     }
 
@@ -45,10 +48,11 @@ class OrderController extends Controller
         $request->validate(['notes' => 'sometimes|nullable|string', 'shipping_address' => 'sometimes|array']);
         $order = $this->orderService->findById($id);
         $this->authorize('update', $order);
-        if (!$order->isPending()) {
+        if (! $order->isPending()) {
             return response()->json(['message' => 'Only pending orders can be updated.'], 422);
         }
         $order->update($request->only(['notes', 'shipping_address']));
+
         return response()->json(['message' => 'Order updated.', 'data' => new OrderResource($order->fresh())]);
     }
 
@@ -57,6 +61,7 @@ class OrderController extends Controller
         $order = $this->orderService->findById($id);
         $this->authorize('delete', $order);
         $this->orderService->delete($id);
+
         return response()->json(['message' => 'Order deleted.'], 204);
     }
 
@@ -65,6 +70,7 @@ class OrderController extends Controller
         $order = $this->orderService->findById($id);
         $this->authorize('update', $order);
         $cancelled = $this->orderService->cancel($id);
+
         return response()->json(['message' => 'Order cancelled.', 'data' => new OrderResource($cancelled)]);
     }
 
@@ -72,8 +78,9 @@ class OrderController extends Controller
     {
         $order = $this->orderService->findById($id);
         $this->authorize('view', $order);
+
         return response()->json([
-            'data' => $order->sagaLogs->map(fn($log) => [
+            'data' => $order->sagaLogs->map(fn ($log) => [
                 'step_name' => $log->step_name,
                 'status' => $log->status,
                 'payload' => $log->payload,

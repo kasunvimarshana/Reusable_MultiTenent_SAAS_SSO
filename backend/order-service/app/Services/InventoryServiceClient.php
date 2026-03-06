@@ -31,6 +31,7 @@ class InventoryServiceClient
                 'json' => ['product_id' => $productId, 'warehouse_id' => $warehouseId, 'quantity' => $quantity],
                 'headers' => $this->headers($tenantId),
             ]);
+
             return ['success' => true, 'data' => json_decode($response->getBody()->getContents(), true)];
         } catch (RequestException $e) {
             $message = 'Inventory reservation failed';
@@ -38,6 +39,7 @@ class InventoryServiceClient
                 $body = json_decode($e->getResponse()->getBody()->getContents(), true);
                 $message = $body['message'] ?? $message;
             }
+
             return ['success' => false, 'message' => $message];
         }
     }
@@ -49,9 +51,11 @@ class InventoryServiceClient
                 'json' => ['product_id' => $productId, 'warehouse_id' => $warehouseId, 'quantity' => $quantity],
                 'headers' => $this->headers($tenantId),
             ]);
+
             return ['success' => true, 'data' => json_decode($response->getBody()->getContents(), true)];
         } catch (RequestException $e) {
             Log::error('releaseInventory failed', ['error' => $e->getMessage()]);
+
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }
@@ -63,9 +67,11 @@ class InventoryServiceClient
                 'json' => ['product_id' => $productId, 'warehouse_id' => $warehouseId, 'quantity' => $quantity],
                 'headers' => $this->headers($tenantId),
             ]);
+
             return ['success' => true, 'data' => json_decode($response->getBody()->getContents(), true)];
         } catch (RequestException $e) {
             Log::error('confirmInventory failed', ['error' => $e->getMessage()]);
+
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }

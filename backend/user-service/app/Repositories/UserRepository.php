@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Repositories\Interfaces\UserRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
 class UserRepository implements UserRepositoryInterface
 {
@@ -27,6 +28,7 @@ class UserRepository implements UserRepositoryInterface
     public function update(User $user, array $data): User
     {
         $user->update($data);
+
         return $user->fresh();
     }
 
@@ -35,28 +37,23 @@ class UserRepository implements UserRepositoryInterface
         return $user->delete();
     }
 
-    public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    public function paginate(array $filters = [], ?int $perPage = null): LengthAwarePaginator|Collection
     {
-        return User::query()
-            ->when(isset($filters['search']), fn(Builder $q) =>
-                $q->where(fn(Builder $inner) =>
-                    $inner->where('name', 'like', "%{$filters['search']}%")
-                          ->orWhere('email', 'like', "%{$filters['search']}%")
-                )
+        $query = User::query()
+            ->when(isset($filters['search']), fn (Builder $q) => $q->where(fn (Builder $inner) => $inner->where('name', 'like', "%{$filters['search']}%")
+                ->orWhere('email', 'like', "%{$filters['search']}%")
             )
-            ->when(isset($filters['role']), fn(Builder $q) =>
-                $q->whereJsonContains('roles', $filters['role'])
             )
-            ->when(isset($filters['is_active']), fn(Builder $q) =>
-                $q->where('is_active', filter_var($filters['is_active'], FILTER_VALIDATE_BOOLEAN))
+            ->when(isset($filters['role']), fn (Builder $q) => $q->whereJsonContains('roles', $filters['role'])
             )
-            ->when(isset($filters['department']), fn(Builder $q) =>
-                $q->whereJsonContains('attributes->department', $filters['department'])
+            ->when(isset($filters['is_active']), fn (Builder $q) => $q->where('is_active', filter_var($filters['is_active'], FILTER_VALIDATE_BOOLEAN))
             )
-            ->when(isset($filters['region']), fn(Builder $q) =>
-                $q->whereJsonContains('attributes->region', $filters['region'])
+            ->when(isset($filters['department']), fn (Builder $q) => $q->whereJsonContains('attributes->department', $filters['department'])
             )
-            ->orderBy($filters['sort_by'] ?? 'created_at', $filters['sort_dir'] ?? 'desc')
-            ->paginate($perPage);
+            ->when(isset($filters['region']), fn (Builder $q) => $q->whereJsonContains('attributes->region', $filters['region'])
+            )
+            ->orderBy($filters['sort_by'] ?? 'created_at', $filters['sort_dir'] ?? 'desc');
+
+        return $perPage !== null ? $query->paginate($perPage) : $query->get();
     }
 }

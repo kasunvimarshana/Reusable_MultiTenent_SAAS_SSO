@@ -5,6 +5,8 @@ namespace App\Services;
 use App\DTOs\TenantDTO;
 use App\Models\Tenant;
 use App\Repositories\Interfaces\TenantRepositoryInterface;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
 
 class TenantService
@@ -13,7 +15,7 @@ class TenantService
         private readonly TenantRepositoryInterface $tenantRepository,
     ) {}
 
-    public function list(array $filters = [], int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    public function list(array $filters = [], ?int $perPage = null): LengthAwarePaginator|Collection
     {
         return $this->tenantRepository->paginate($filters, $perPage);
     }
@@ -21,13 +23,14 @@ class TenantService
     public function findById(int $id): Tenant
     {
         return $this->tenantRepository->findById($id)
-            ?? throw new \Illuminate\Database\Eloquent\ModelNotFoundException("Tenant not found.");
+            ?? throw new \Illuminate\Database\Eloquent\ModelNotFoundException('Tenant not found.');
     }
 
     public function create(array $data): Tenant
     {
         $data['slug'] = $data['slug'] ?? Str::slug($data['name']);
         $dto = TenantDTO::fromArray($data);
+
         return $this->tenantRepository->create($dto->toArray());
     }
 
@@ -38,6 +41,7 @@ class TenantService
             'name' => $tenant->name,
             'slug' => $tenant->slug,
         ], $data));
+
         return $this->tenantRepository->update($tenant, $dto->toArray());
     }
 

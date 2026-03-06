@@ -36,6 +36,7 @@ class InventoryServiceClient
                 'product_id' => $productId,
                 'error' => $e->getMessage(),
             ]);
+
             return [];
         }
     }

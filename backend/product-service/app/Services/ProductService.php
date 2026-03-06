@@ -9,6 +9,7 @@ use App\Events\ProductUpdated;
 use App\Models\Product;
 use App\Repositories\Interfaces\ProductRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -19,7 +20,7 @@ class ProductService
         private readonly InventoryServiceClient $inventoryClient,
     ) {}
 
-    public function list(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    public function list(array $filters = [], ?int $perPage = null): LengthAwarePaginator|Collection
     {
         return $this->productRepository->paginate($filters, $perPage);
     }
@@ -27,7 +28,7 @@ class ProductService
     public function findById(int $id): Product
     {
         return $this->productRepository->findById($id)
-            ?? throw new \Illuminate\Database\Eloquent\ModelNotFoundException("Product not found.");
+            ?? throw new \Illuminate\Database\Eloquent\ModelNotFoundException('Product not found.');
     }
 
     public function create(array $data): Product
@@ -80,6 +81,7 @@ class ProductService
     public function getInventory(int $productId): array
     {
         $product = $this->findById($productId);
+
         return $this->inventoryClient->getInventoryForProduct($product->id, $product->tenant_id);
     }
 }

@@ -6,6 +6,7 @@ use App\Models\Warehouse;
 use App\Repositories\Interfaces\WarehouseRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
 class WarehouseRepository implements WarehouseRepositoryInterface
 {
@@ -22,6 +23,7 @@ class WarehouseRepository implements WarehouseRepositoryInterface
     public function update(Warehouse $warehouse, array $data): Warehouse
     {
         $warehouse->update($data);
+
         return $warehouse->fresh();
     }
 
@@ -30,20 +32,18 @@ class WarehouseRepository implements WarehouseRepositoryInterface
         return $warehouse->delete();
     }
 
-    public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    public function paginate(array $filters = [], ?int $perPage = null): LengthAwarePaginator|Collection
     {
-        return Warehouse::query()
-            ->when(isset($filters['search']), fn(Builder $q) =>
-                $q->where(fn(Builder $inner) =>
-                    $inner->where('name', 'like', "%{$filters['search']}%")
-                          ->orWhere('code', 'like', "%{$filters['search']}%")
-                          ->orWhere('city', 'like', "%{$filters['search']}%")
-                )
+        $query = Warehouse::query()
+            ->when(isset($filters['search']), fn (Builder $q) => $q->where(fn (Builder $inner) => $inner->where('name', 'like', "%{$filters['search']}%")
+                ->orWhere('code', 'like', "%{$filters['search']}%")
+                ->orWhere('city', 'like', "%{$filters['search']}%")
             )
-            ->when(isset($filters['is_active']), fn(Builder $q) =>
-                $q->where('is_active', filter_var($filters['is_active'], FILTER_VALIDATE_BOOLEAN))
             )
-            ->orderBy($filters['sort_by'] ?? 'name', $filters['sort_dir'] ?? 'asc')
-            ->paginate($perPage);
+            ->when(isset($filters['is_active']), fn (Builder $q) => $q->where('is_active', filter_var($filters['is_active'], FILTER_VALIDATE_BOOLEAN))
+            )
+            ->orderBy($filters['sort_by'] ?? 'name', $filters['sort_dir'] ?? 'asc');
+
+        return $perPage !== null ? $query->paginate($perPage) : $query->get();
     }
 }

@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Repositories\Interfaces\ProductRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
 class ProductRepository implements ProductRepositoryInterface
 {
@@ -27,6 +28,7 @@ class ProductRepository implements ProductRepositoryInterface
     public function update(Product $product, array $data): Product
     {
         $product->update($data);
+
         return $product->fresh(['category']);
     }
 
@@ -35,32 +37,26 @@ class ProductRepository implements ProductRepositoryInterface
         return $product->delete();
     }
 
-    public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    public function paginate(array $filters = [], ?int $perPage = null): LengthAwarePaginator|Collection
     {
-        return Product::with('category')
-            ->when(isset($filters['search']), fn(Builder $q) =>
-                $q->where(fn(Builder $inner) =>
-                    $inner->where('name', 'like', "%{$filters['search']}%")
-                          ->orWhere('sku', 'like', "%{$filters['search']}%")
-                          ->orWhere('description', 'like', "%{$filters['search']}%")
-                )
+        $query = Product::with('category')
+            ->when(isset($filters['search']), fn (Builder $q) => $q->where(fn (Builder $inner) => $inner->where('name', 'like', "%{$filters['search']}%")
+                ->orWhere('sku', 'like', "%{$filters['search']}%")
+                ->orWhere('description', 'like', "%{$filters['search']}%")
             )
-            ->when(isset($filters['category_id']), fn(Builder $q) =>
-                $q->where('category_id', $filters['category_id'])
             )
-            ->when(isset($filters['is_active']), fn(Builder $q) =>
-                $q->where('is_active', filter_var($filters['is_active'], FILTER_VALIDATE_BOOLEAN))
+            ->when(isset($filters['category_id']), fn (Builder $q) => $q->where('category_id', $filters['category_id'])
             )
-            ->when(isset($filters['min_price']), fn(Builder $q) =>
-                $q->where('price', '>=', $filters['min_price'])
+            ->when(isset($filters['is_active']), fn (Builder $q) => $q->where('is_active', filter_var($filters['is_active'], FILTER_VALIDATE_BOOLEAN))
             )
-            ->when(isset($filters['max_price']), fn(Builder $q) =>
-                $q->where('price', '<=', $filters['max_price'])
+            ->when(isset($filters['min_price']), fn (Builder $q) => $q->where('price', '>=', $filters['min_price'])
             )
-            ->when(isset($filters['tag']), fn(Builder $q) =>
-                $q->whereJsonContains('tags', $filters['tag'])
+            ->when(isset($filters['max_price']), fn (Builder $q) => $q->where('price', '<=', $filters['max_price'])
             )
-            ->orderBy($filters['sort_by'] ?? 'created_at', $filters['sort_dir'] ?? 'desc')
-            ->paginate($perPage);
+            ->when(isset($filters['tag']), fn (Builder $q) => $q->whereJsonContains('tags', $filters['tag'])
+            )
+            ->orderBy($filters['sort_by'] ?? 'created_at', $filters['sort_dir'] ?? 'desc');
+
+        return $perPage !== null ? $query->paginate($perPage) : $query->get();
     }
 }

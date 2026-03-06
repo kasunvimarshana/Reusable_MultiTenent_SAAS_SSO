@@ -20,8 +20,9 @@ class WarehouseController extends Controller
     {
         $warehouses = $this->warehouseService->list(
             $request->only(['search', 'is_active', 'sort_by', 'sort_dir']),
-            $request->input('per_page', 50),
+            $request->filled('per_page') ? (int) $request->input('per_page') : null,
         );
+
         return response()->json(WarehouseResource::collection($warehouses)->response()->getData(true));
     }
 
@@ -30,12 +31,14 @@ class WarehouseController extends Controller
         $this->authorize('create', \App\Models\Warehouse::class);
         $data = array_merge($request->validated(), ['tenant_id' => app('current_tenant_id')]);
         $warehouse = $this->warehouseService->create($data);
+
         return response()->json(['message' => 'Warehouse created.', 'data' => new WarehouseResource($warehouse)], 201);
     }
 
     public function show(int $id): JsonResponse
     {
         $warehouse = $this->warehouseService->findById($id);
+
         return response()->json(['data' => new WarehouseResource($warehouse)]);
     }
 
@@ -43,6 +46,7 @@ class WarehouseController extends Controller
     {
         $this->authorize('update', $this->warehouseService->findById($id));
         $updated = $this->warehouseService->update($id, $request->validated());
+
         return response()->json(['message' => 'Warehouse updated.', 'data' => new WarehouseResource($updated)]);
     }
 
@@ -50,6 +54,7 @@ class WarehouseController extends Controller
     {
         $this->authorize('delete', $this->warehouseService->findById($id));
         $this->warehouseService->delete($id);
+
         return response()->json(['message' => 'Warehouse deleted.'], 204);
     }
 }

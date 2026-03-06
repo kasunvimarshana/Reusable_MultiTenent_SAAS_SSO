@@ -2,14 +2,15 @@
 
 namespace App\Services;
 
-use PhpAmqpLib\Connection\AMQPStreamConnection;
-use PhpAmqpLib\Message\AMQPMessage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use PhpAmqpLib\Connection\AMQPStreamConnection;
+use PhpAmqpLib\Message\AMQPMessage;
 
 class MessageBrokerService
 {
     private ?AMQPStreamConnection $connection = null;
+
     private ?\PhpAmqpLib\Channel\AMQPChannel $channel = null;
 
     public function publish(string $routingKey, array $payload): void
@@ -31,7 +32,9 @@ class MessageBrokerService
 
     private function connect(): void
     {
-        if ($this->connection && $this->connection->isConnected()) return;
+        if ($this->connection && $this->connection->isConnected()) {
+            return;
+        }
         $c = config('services.rabbitmq');
         $this->connection = new AMQPStreamConnection($c['host'], $c['port'], $c['user'], $c['password'], $c['vhost']);
         $this->channel = $this->connection->channel();
@@ -40,6 +43,10 @@ class MessageBrokerService
 
     public function __destruct()
     {
-        try { $this->channel?->close(); $this->connection?->close(); } catch (\Exception) {}
+        try {
+            $this->channel?->close();
+            $this->connection?->close();
+        } catch (\Exception) {
+        }
     }
 }

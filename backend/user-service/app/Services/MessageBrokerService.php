@@ -2,14 +2,15 @@
 
 namespace App\Services;
 
-use PhpAmqpLib\Connection\AMQPStreamConnection;
-use PhpAmqpLib\Message\AMQPMessage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use PhpAmqpLib\Connection\AMQPStreamConnection;
+use PhpAmqpLib\Message\AMQPMessage;
 
 class MessageBrokerService
 {
     private ?AMQPStreamConnection $connection = null;
+
     private ?\PhpAmqpLib\Channel\AMQPChannel $channel = null;
 
     public function publish(string $routingKey, array $payload): void
@@ -48,6 +49,7 @@ class MessageBrokerService
         try {
             $this->channel?->close();
             $this->connection?->close();
-        } catch (\Exception) {}
+        } catch (\Exception) {
+        }
     }
 }

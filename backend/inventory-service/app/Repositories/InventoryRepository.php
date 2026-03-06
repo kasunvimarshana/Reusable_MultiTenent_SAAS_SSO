@@ -37,6 +37,7 @@ class InventoryRepository implements InventoryRepositoryInterface
     public function update(Inventory $inventory, array $data): Inventory
     {
         $inventory->update($data);
+
         return $inventory->fresh(['warehouse']);
     }
 
@@ -45,22 +46,19 @@ class InventoryRepository implements InventoryRepositoryInterface
         return $inventory->delete();
     }
 
-    public function paginate(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    public function paginate(array $filters = [], ?int $perPage = null): LengthAwarePaginator|Collection
     {
-        return Inventory::with('warehouse')
-            ->when(isset($filters['product_id']), fn(Builder $q) =>
-                $q->where('product_id', $filters['product_id'])
+        $query = Inventory::with('warehouse')
+            ->when(isset($filters['product_id']), fn (Builder $q) => $q->where('product_id', $filters['product_id'])
             )
-            ->when(isset($filters['product_ids']) && is_array($filters['product_ids']), fn(Builder $q) =>
-                $q->whereIn('product_id', $filters['product_ids'])
+            ->when(isset($filters['product_ids']) && is_array($filters['product_ids']), fn (Builder $q) => $q->whereIn('product_id', $filters['product_ids'])
             )
-            ->when(isset($filters['warehouse_id']), fn(Builder $q) =>
-                $q->where('warehouse_id', $filters['warehouse_id'])
+            ->when(isset($filters['warehouse_id']), fn (Builder $q) => $q->where('warehouse_id', $filters['warehouse_id'])
             )
-            ->when(isset($filters['low_stock']), fn(Builder $q) =>
-                $q->whereRaw('(quantity - reserved_quantity) <= reorder_level')
+            ->when(isset($filters['low_stock']), fn (Builder $q) => $q->whereRaw('(quantity - reserved_quantity) <= reorder_level')
             )
-            ->orderBy($filters['sort_by'] ?? 'created_at', $filters['sort_dir'] ?? 'desc')
-            ->paginate($perPage);
+            ->orderBy($filters['sort_by'] ?? 'created_at', $filters['sort_dir'] ?? 'desc');
+
+        return $perPage !== null ? $query->paginate($perPage) : $query->get();
     }
 }

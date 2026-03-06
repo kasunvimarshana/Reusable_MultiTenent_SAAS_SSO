@@ -23,7 +23,7 @@ class InventoryController extends Controller
                 'product_id', 'warehouse_id', 'product_name',
                 'low_stock', 'sort_by', 'sort_dir',
             ]),
-            $request->input('per_page', 15),
+            $request->filled('per_page') ? (int) $request->input('per_page') : null,
         );
 
         return response()->json(InventoryResource::collection($inventory)->response()->getData(true));
